@@ -60,3 +60,33 @@ Do not call a lower frame-time variance result a latency win unless information 
 - [ ] raw CSV / traces
 - [ ] exact environment receipt
 - [ ] upstream-ready evidence note for `#5869` or `#4654`
+
+## Ready-to-run configs
+
+This branch contains:
+
+- `configs/baseline.conf`
+- `configs/present-timing-off.conf`
+- `configs/builtin-sleep.conf`
+- `configs/nv-low-latency2.conf`
+- `run-abba.sh`
+
+Example first-pass comparisons:
+
+```sh
+# Present timing A/B
+bash experiments/e2e-latency/run-abba.sh \
+  experiments/e2e-latency/configs/baseline.conf \
+  experiments/e2e-latency/configs/present-timing-off.conf \
+  -- <deterministic-workload>
+
+# Built-in latency control vs VK_NV_low_latency2
+bash experiments/e2e-latency/run-abba.sh \
+  experiments/e2e-latency/configs/builtin-sleep.conf \
+  experiments/e2e-latency/configs/nv-low-latency2.conf \
+  -- <deterministic-workload>
+```
+
+The runner writes an environment receipt, the exact per-run `dxvk.conf`, timestamps, exit status, and DXVK logs into a unique results directory.
+
+Pair these receipts with the same external frame-time / latency capture method for every A/B run.
