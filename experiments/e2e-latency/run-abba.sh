@@ -4,7 +4,7 @@ set -euo pipefail
 if (( $# < 4 )); then
   cat >&2 <<'EOF'
 usage:
-  run-abba.sh <A.conf> <B.conf> -- <workload command...>
+  bash run-abba.sh <A.conf> <B.conf> -- <workload command...>
 
 Runs A / B / B / A. The workload must terminate on its own.
 Use the same deterministic scene and duration for every run.
@@ -29,17 +29,21 @@ fi
 
 root="${LATENCY_RESULTS_DIR:-dxvk-latency-$(date +%Y%m%d-%H%M%S)}"
 mkdir -p "$root"
+root="$(realpath "$root")"
 
-./experiments/e2e-latency/capture-env.sh "$root/environment.txt"
+bash ./experiments/e2e-latency/capture-env.sh "$root/environment.txt"
 
 run_one() {
   local label="$1"
   local config="$2"
   local index="$3"
+  shift 3
+
   local dir="$root/${index}-${label}"
   mkdir -p "$dir"
 
   cp "$config" "$dir/dxvk.conf"
+
   {
     echo "label=$label"
     echo "config=$config"
@@ -50,10 +54,10 @@ run_one() {
   } > "$dir/run.txt"
 
   set +e
-  DXVK_CONFIG_FILE="$PWD/$dir/dxvk.conf" \
-  DXVK_LOG_PATH="$PWD/$dir" \
+  DXVK_CONFIG_FILE="$dir/dxvk.conf" \
+  DXVK_LOG_PATH="$dir" \
   DXVK_HUD="${DXVK_HUD:-latency}" \
-    "${@:4}"
+    "$@"
   status=$?
   set -e
 
@@ -61,8 +65,6 @@ run_one() {
     echo "ended_at=$(date --iso-8601=ns)"
     echo "exit_status=$status"
   } >> "$dir/run.txt"
-
-  return "$status"
 }
 
 run_one A "$a" 1 "$@"
